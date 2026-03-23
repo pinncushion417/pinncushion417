@@ -3,18 +3,13 @@
 --
 -- SPEC:
 --   Value = Y  if PanelStatusCode = 'Open Panel'
---   Value = N  if PanelStatusCode = 'Closed Panel', 'No Value Specified', or NULL
---              → set N and EXCLUDE from Submission File
+--              AND Column BF (PCPStatus / specialty list) = Y
+--   Value = N  otherwise → EXCLUDE from Submission File
+--
+-- "Column BF" = [PCPStatus], which is Y when SPCODE.[Name]
+--   is in the approved specialty list.
 --
 -- ERROR CATEGORY: PCP Not Accepting New Patients
--- ============================================================
-
--- ============================================================
--- ACTUAL PanelStatusCode values in the data (verified):
---   1. No Value Specified  → N (exclude)
---   2. Closed Panel        → N (exclude)
---   3. NULL                → N (exclude)
---   4. Open Panel          → Y
 -- ============================================================
 
 -- ============================================================
@@ -24,6 +19,27 @@
     , [PCPAcceptingNewPatients]
         = CASE
             WHEN prap.PanelStatusCode = 'Open Panel'
+                 AND SPCODE.[Name] IN (
+                     'Family Medicine',
+                     'Family Medicine~',
+                     'Gynecology',
+                     'Geriatrics',
+                     'General Practice',
+                     'Obstetrics',
+                     'Obstetrics and Gynecology',
+                     'Internal Medicine',
+                     'Pediatrics',
+                     'Genetics',
+                     'Maternal and Fetal Medicine',
+                     'Maternal and Fetal Medicine~',
+                     'Clinic / Group Practice',
+                     'Federally Qualified Health Centers (FQHC)',
+                     'Rural Health Clinic (Provider) for Hospital Based RHCs',
+                     'Clinical Nurse Specialist',
+                     'Clinical Nurse Specialist~',
+                     'Physicians Assistant',
+                     'Physicians Assistant~'
+                 )
             THEN 'Y'
             ELSE 'N'
           END
@@ -35,16 +51,7 @@
 -- ============================================================
 /*
     AND prap.PanelStatusCode = 'Open Panel'
+    AND SPCODE.[Name] IN (
+        'Family Medicine', 'Family Medicine~', 'Gynecology', ...
+    )
 */
-
--- ============================================================
--- WHAT CHANGED vs. the old query:
---
---   REMOVED:
---     - Nested CASE checking SPCODE.[Name] IN ('Family Medicine', ...)
---       That specialty list belongs to [PCPStatus], not here.
---     - AND PRP.PCPFlag = 'Y'  (that column does not exist)
---
---   RESULT:
---     Open Panel = Y, everything else = N
--- ============================================================
