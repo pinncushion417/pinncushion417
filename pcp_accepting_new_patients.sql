@@ -2,10 +2,12 @@
 -- Column BG - PCPAcceptingNewPatients
 --
 -- SPEC:
---   Value = Y  if Cactus/MDM has Open Panel OR Accepting New Patients
---              AND Column BF (PCPFlag) = Y
---   Value = N  if provider record has Closed Panel OR Not Accepting New Patients
+--   Value = Y  if PanelStatusCode = 'Open Panel' AND PCPFlag = 'Y'
+--   Value = N  if PanelStatusCode = 'Closed Panel', 'No Value Specified', or NULL
 --              → set N and EXCLUDE from Submission File
+--
+-- NOTE: [PCPStatus] (the column above this one) correctly uses the
+--       specialty list (SPCODE.[Name] IN ...). Do NOT copy that logic here.
 --
 -- ERROR CATEGORY: PCP Not Accepting New Patients
 -- ============================================================
