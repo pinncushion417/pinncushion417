@@ -11,14 +11,22 @@
 -- ============================================================
 
 -- ============================================================
+-- ACTUAL PanelStatusCode values in the data (verified):
+--   1. No Value Specified
+--   2. Closed Panel
+--   3. NULL
+--   4. Open Panel
+--
+-- NOTE: 'Accepting New Patients' does NOT exist as a value.
+--       Only 'Open Panel' qualifies for Y.
+-- ============================================================
+
+-- ============================================================
 -- CORRECTED CASE statement for [PCPAcceptingNewPatients]
 -- ============================================================
 /*
     CASE
-        WHEN (
-                prap.PanelStatusCode = 'Open Panel'
-             OR prap.PanelStatusCode = 'Accepting New Patients'
-             )
+        WHEN prap.PanelStatusCode = 'Open Panel'
              AND PRP.PCPFlag = 'Y'
         THEN 'Y'
         ELSE 'N'
@@ -27,17 +35,14 @@
 
 -- ============================================================
 -- EXCLUSION from Submission File
--- Add this to the WHERE clause (or a wrapping filter) to
--- exclude records where PCPAcceptingNewPatients = N
+-- Records where PCPAcceptingNewPatients = N must be excluded.
+-- These are records where PanelStatusCode is:
+--   'Closed Panel', 'No Value Specified', or NULL
 -- ============================================================
 /*
-    -- In WHERE clause:
-    AND NOT (
-        prap.PanelStatusCode IN ('Closed Panel', 'Not Accepting New Patients')
-    )
-
-    -- OR equivalently, filter after computing the column:
-    WHERE [PCPAcceptingNewPatients] = 'Y'
+    -- Add to WHERE clause:
+    AND prap.PanelStatusCode = 'Open Panel'
+    AND PRP.PCPFlag = 'Y'
 */
 
 -- ============================================================
@@ -45,16 +50,14 @@
 --
 --   REMOVED:
 --     - Inner CASE checking SPCODE.[Name] IN ('Family Medicine', ...)
---       That specialty list check belongs to a different column,
---       not to PCPAcceptingNewPatients.
+--       That specialty list check belongs to a different column.
+--     - OR prap.PanelStatusCode = 'Accepting New Patients'
+--       That value does not exist in the data.
 --
 --   ADDED:
---     - OR prap.PanelStatusCode = 'Accepting New Patients'
---       (spec requires Open Panel OR Accepting New Patients)
---
 --     - AND PRP.PCPFlag = 'Y'
 --       (spec requires column BF = Y as a second condition)
 --
 --   UNCHANGED:
---     - ELSE 'N' END  (Closed Panel / Not Accepting → N)
+--     - ELSE 'N' END  (Closed Panel / No Value Specified / NULL → N)
 -- ============================================================
